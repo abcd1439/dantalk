@@ -1,0 +1,22 @@
+'use strict'
+const cluster = require('cluster');
+const http = require('http');
+const coreNum = require('os').cpus().length;
+const app = require('../app');
+const port = process.env.PORT || 5001;
+let socketServer;
+
+if (cluster.isMaster) {
+	for (let i = 0; i < coreNum; i++) {
+		cluster.fork();
+	}
+	socketServer = require('../chatting-server/chatting');
+	
+	cluster.on('exit', (worker, code, signal) => {
+		console.log('worker ', worker.process.pid, ' died');
+	});
+} else {
+	http.createServer(app).listen(port, () => {
+		console.log('server start');	
+	});
+}
